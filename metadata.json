@@ -1,7 +1,5 @@
 {
   "name": "CM Jewelry Studio",
   "description": "A luxury AI-powered jewelry photo editor for professional results.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }

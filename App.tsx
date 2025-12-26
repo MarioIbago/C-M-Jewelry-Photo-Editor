@@ -14,7 +14,6 @@ import {
   LayoutTemplate
 } from 'lucide-react';
 import { Button } from './components/Button';
-import { AudioInput } from './components/AudioInput';
 import { editImageWithGemini } from './services/geminiService';
 import { Preset, EditHistory } from './types';
 
@@ -190,10 +189,6 @@ function App() {
     setTimeout(() => {
       setDbStatus('saved');
     }, 1500);
-  };
-
-  const handleVoiceTranscription = (text: string) => {
-    setPrompt(prev => prev ? `${prev} ${text}` : text);
   };
 
   // --- COMPONENT: LOGO ---
@@ -488,12 +483,9 @@ function App() {
                   <textarea
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="Describe the transformation or use voice..."
-                    className="w-full h-32 glass-input rounded-xl p-5 pr-14 text-sm text-white placeholder-white/30 focus:outline-none resize-none font-sans font-light leading-relaxed"
+                    placeholder="Describe the transformation..."
+                    className="w-full h-32 glass-input rounded-xl p-5 pr-5 text-sm text-white placeholder-white/30 focus:outline-none resize-none font-sans font-light leading-relaxed"
                   />
-                  <div className="absolute bottom-3 right-3 opacity-70 group-hover:opacity-100 transition-opacity">
-                    <AudioInput onTranscription={handleVoiceTranscription} />
-                  </div>
                 </div>
 
                 <Button 

@@ -1,9 +1,18 @@
 /**
  * SERVICE: Google Drive Integration
- * Handles uploading processed imagery to cloud storage.
  */
 
-export const uploadImageToDrive = async (
+// --- IMPLEMENTACIÓN REAL ---
+
+/**
+ * Sube una imagen Base64 a Google Drive usando la API REST.
+ * 
+ * @param base64Image La imagen en formato base64.
+ * @param fileName El nombre del archivo.
+ * @param accessToken El token de acceso de Google OAuth.
+ * @param folderId (Opcional) El ID de la carpeta donde se subirá.
+ */
+export const uploadImageToDriveReal = async (
   base64Image: string, 
   fileName: string, 
   accessToken: string,
@@ -14,14 +23,16 @@ export const uploadImageToDrive = async (
     mimeType: 'image/jpeg',
   };
 
+  // Si se proporciona un Folder ID, lo añadimos a los padres
   if (folderId) {
     metadata.parents = [folderId];
   }
 
+  // Prepara el cuerpo Multipart
   const form = new FormData();
   form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
   
-  // Convert base64 to Blob
+  // Convierte base64 a Blob de manera eficiente
   const byteCharacters = atob(base64Image.split(',')[1]);
   const byteNumbers = new Array(byteCharacters.length);
   for (let i = 0; i < byteCharacters.length; i++) {
@@ -40,9 +51,18 @@ export const uploadImageToDrive = async (
 
   if (!response.ok) {
     const errorBody = await response.json();
-    console.error("Google Drive API Error:", errorBody);
-    throw new Error('Could not upload to Google Drive. Check permissions.');
+    console.error("Drive API Error:", errorBody);
+    throw new Error('Error subiendo a Drive. Verifica permisos.');
   }
   
-  return await response.json();
+  return await response.json(); // Retorna { id, webViewLink, name }
+};
+
+// Mantiene la versión Mock por si falla la auth o para pruebas rápidas
+export const uploadImageToDriveMock = async (image: string): Promise<string> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve("https://drive.google.com/drive/u/0/folders/1wOr93Yy-L1z1FgR5OBy_w_wUxTABNMVK");
+    }, 2000);
+  });
 };

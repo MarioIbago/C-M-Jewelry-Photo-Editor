@@ -6,7 +6,8 @@ import { GoogleGenAI } from "@google/genai";
  */
 export const editImageWithGemini = async (
   imageBase64: string,
-  prompt: string
+  prompt: string,
+  aspectRatio: string = '4:5'
 ): Promise<string> => {
   // The API key is obtained exclusively from process.env.API_KEY
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -26,7 +27,10 @@ export const editImageWithGemini = async (
             },
           },
           {
-            text: `Act as a professional high-end jewelry photo editor. ${prompt}. Return ONLY the edited image part. Maintain high resolution, sharp details, and realistic luxury lighting.`,
+            text: `Act as a professional high-end jewelry photo editor. ${prompt}. 
+            IMPORTANT: The output image MUST have an aspect ratio of ${aspectRatio}. 
+            If the input is different, crop or extend the background elegantly to fit ${aspectRatio}.
+            Return ONLY the edited image part. Maintain high resolution, sharp details, and realistic luxury lighting.`,
           },
         ],
       },
@@ -42,9 +46,62 @@ export const editImageWithGemini = async (
       }
     }
     
-    throw new Error("The model did not return an image part.");
-  } catch (error) {
+    // Check for text refusal
+    if (candidate?.content?.parts?.[0]?.text) {
+       console.warn("Model text response:", candidate.content.parts[0].text);
+    }
+
+    throw new Error("The model did not return an image part. Please try again.");
+  } catch (error: any) {
     console.error("Gemini API Error:", error);
+    if (error.message?.includes('403')) {
+      throw new Error("Permission Denied (403). Ensure you are using a supported model like gemini-2.5-flash-image.");
+    }
+    throw error;
+  }
+};
+
+/**
+ * Generates an Instagram caption for a jewelry image.
+ */
+export const generateJewelryCaption = async (
+  imageBase64: string, 
+  userIdea: string
+): Promise<string> => {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash', // Multimodal model suitable for text generation from images
+      contents: {
+        parts: [
+          {
+            inlineData: {
+              mimeType: 'image/jpeg',
+              data: cleanBase64,
+            },
+          },
+          {
+            text: `Act as a Social Media Manager for a luxury jewelry brand called 'CM Jewelry Studio'.
+            Write an engaging, elegant, and high-converting Instagram caption based on the attached image and this context: "${userIdea}".
+            
+            MANDATORY REQUIREMENTS:
+            1. Tone: Sophisticated, minimal, luxury.
+            2. MUST include the phrase: "📍 Envío en MTY".
+            3. MUST include the phrase: "📩 Pedidos por DM".
+            4. Use line breaks for readability.
+            5. Add 3-5 relevant high-performing hashtags for jewelry in Mexico.
+            
+            Return ONLY the caption text.`,
+          },
+        ],
+      },
+    });
+
+    return response.text || "Could not generate caption.";
+  } catch (error) {
+    console.error("Caption Generation Error:", error);
     throw error;
   }
 };
